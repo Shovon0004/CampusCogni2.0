@@ -15,7 +15,8 @@ export default function HomePage() {
       <section className="relative overflow-hidden">
         {/* Subtle background gradient */}
         <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-purple-500/5"></div>
-
+        {/* Grid background */}
+        <div className="absolute inset-0 z-[-1] bg-[url('/grid.svg')] bg-center [mask-image:linear-gradient(180deg,white,rgba(255,255,255,0))] dark:bg-[url('/grid-dark.svg')]"></div>
         <div className="container mx-auto px-4 py-16 sm:py-24 lg:py-32 relative">
           <div className="text-center max-w-4xl mx-auto">
             {/* Announcement Badge */}

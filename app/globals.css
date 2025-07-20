@@ -73,33 +73,33 @@
     -webkit-box-orient: vertical;
     -webkit-line-clamp: 3;
   }
-}
 
-/* Smooth scrolling */
-html {
-  scroll-behavior: smooth;
-}
+  /* Smooth scrolling */
+  html {
+    scroll-behavior: smooth;
+  }
 
-/* Custom scrollbar */
-::-webkit-scrollbar {
-  width: 6px;
-}
+  /* Custom scrollbar */
+  ::-webkit-scrollbar {
+    width: 6px;
+  }
 
-::-webkit-scrollbar-track {
-  background: hsl(var(--muted));
-}
+  ::-webkit-scrollbar-track {
+    background: hsl(var(--muted));
+  }
 
-::-webkit-scrollbar-thumb {
-  background: hsl(var(--muted-foreground));
-  border-radius: 3px;
-}
+  ::-webkit-scrollbar-thumb {
+    background: hsl(var(--muted-foreground));
+    border-radius: 3px;
+  }
 
-::-webkit-scrollbar-thumb:hover {
-  background: hsl(var(--primary));
-}
+  ::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--primary));
+  }
 
-/* Focus styles */
-.focus-visible:focus-visible {
-  outline: 2px solid hsl(var(--ring));
-  outline-offset: 2px;
+  /* Focus styles */
+  .focus-visible:focus-visible {
+    outline: 2px solid hsl(var(--ring));
+    outline-offset: 2px;
+  }
 }

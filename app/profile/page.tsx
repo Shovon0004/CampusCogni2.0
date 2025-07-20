@@ -180,7 +180,11 @@ export default function ProfilePage() {
   }
 
   if (loading || loadingProfile) {
-    return <div className="min-h-screen flex items-center justify-center">Loading...</div>
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    )
   }
 
   if (!user) {
@@ -188,12 +192,12 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-4xl mx-auto">
           <div className="mb-8">
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">Profile</h1>
-            <p className="text-gray-600">
+            <h1 className="text-3xl font-bold text-foreground mb-2">Profile</h1>
+            <p className="text-muted-foreground">
               Complete your profile to get better job matches and be discovered by recruiters
             </p>
           </div>
@@ -201,10 +205,10 @@ export default function ProfilePage() {
           <div className="grid gap-8 md:grid-cols-3">
             {/* Profile Info */}
             <div className="md:col-span-1">
-              <Card>
+              <Card className="border-0 shadow-sm bg-background/80 backdrop-blur-sm">
                 <CardHeader>
                   <div className="flex items-center space-x-4">
-                    <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
+                    <div className="w-16 h-16 bg-gradient-to-br from-primary to-purple-600 rounded-full flex items-center justify-center">
                       {user.photoURL ? (
                         <img
                           src={user.photoURL || "/placeholder.svg"}
@@ -217,7 +221,7 @@ export default function ProfilePage() {
                     </div>
                     <div>
                       <h3 className="text-lg font-semibold">{user.displayName}</h3>
-                      <p className="text-sm text-gray-600">{user.email}</p>
+                      <p className="text-sm text-muted-foreground">{user.email}</p>
                     </div>
                   </div>
                 </CardHeader>
@@ -226,7 +230,7 @@ export default function ProfilePage() {
 
             {/* Profile Form */}
             <div className="md:col-span-2">
-              <Card>
+              <Card className="border-0 shadow-lg bg-background/80 backdrop-blur-sm">
                 <CardHeader>
                   <CardTitle>Professional Information</CardTitle>
                   <CardDescription>Tell us about your professional background</CardDescription>
@@ -328,13 +332,13 @@ export default function ProfilePage() {
                       ))}
                     </div>
                     {profile.skillsWithExperience.length === 0 && (
-                      <p className="text-sm text-gray-500 mt-2">
+                      <p className="text-sm text-muted-foreground mt-2">
                         Add your skills with years of experience to get better job matches
                       </p>
                     )}
 
                     {/* Legend */}
-                    <div className="flex items-center gap-4 mt-3 text-xs text-gray-600">
+                    <div className="flex items-center gap-4 mt-3 text-xs text-muted-foreground">
                       <div className="flex items-center gap-1">
                         <div className="w-3 h-3 rounded-full bg-green-500"></div>
                         <span>Not verified</span>
@@ -365,7 +369,7 @@ export default function ProfilePage() {
       <SkillVerificationModal
         isOpen={verificationModal.isOpen}
         onClose={() => setVerificationModal({ isOpen: false, skillName: "" })}
-        skillName={verificationModal.skillName}
+        skillName={user?.email || ""}
         userEmail={user?.email || ""}
         onVerificationComplete={handleVerificationComplete}
       />

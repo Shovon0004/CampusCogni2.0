@@ -84,7 +84,11 @@ export default function JobsPage() {
   }
 
   if (loading || loadingJobs) {
-    return <div className="min-h-screen flex items-center justify-center">Loading...</div>
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    )
   }
 
   if (!user) {
@@ -92,11 +96,11 @@ export default function JobsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-8">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Browse Jobs</h1>
-          <p className="text-gray-600">Discover opportunities that match your skills and experience</p>
+          <h1 className="text-3xl font-bold text-foreground mb-2">Browse Jobs</h1>
+          <p className="text-muted-foreground">Discover opportunities that match your skills and experience</p>
         </div>
 
         <div className="grid gap-6">
@@ -105,10 +109,10 @@ export default function JobsPage() {
           ))}
 
           {jobs.length === 0 && (
-            <Card>
+            <Card className="border-0 shadow-sm bg-background/80 backdrop-blur-sm">
               <CardContent className="p-8 text-center">
-                <p className="text-gray-500 text-lg">No jobs available at the moment.</p>
-                <p className="text-gray-400 mt-2">Check back later for new opportunities!</p>
+                <p className="text-muted-foreground text-lg">No jobs available at the moment.</p>
+                <p className="text-muted-foreground mt-2">Check back later for new opportunities!</p>
               </CardContent>
             </Card>
           )}
@@ -143,12 +147,12 @@ function JobCard({ job, onApply }: { job: Job; onApply: (jobId: number) => void 
   }
 
   return (
-    <Card className="hover:shadow-lg transition-shadow">
+    <Card className="hover:shadow-lg transition-shadow border-0 shadow-sm bg-background/80 backdrop-blur-sm">
       <CardHeader>
         <div className="flex justify-between items-start">
           <div>
             <CardTitle className="text-xl mb-2">{job.title}</CardTitle>
-            <CardDescription className="flex items-center gap-4 text-base">
+            <CardDescription className="flex items-center gap-4 text-base text-muted-foreground">
               <div className="flex items-center gap-1">
                 <Building className="w-4 h-4" />
                 {job.company}
@@ -170,7 +174,7 @@ function JobCard({ job, onApply }: { job: Job; onApply: (jobId: number) => void 
                 {formatSalary(job.salary_min, job.salary_max, job.currency)}
               </div>
             )}
-            <div className="flex items-center gap-1 text-sm text-gray-500 mt-1">
+            <div className="flex items-center gap-1 text-sm text-muted-foreground mt-1">
               <Calendar className="w-4 h-4" />
               {formatDate(job.created_at)}
             </div>
@@ -179,11 +183,11 @@ function JobCard({ job, onApply }: { job: Job; onApply: (jobId: number) => void 
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
-          <p className="text-gray-700 line-clamp-3">{job.description}</p>
+          <p className="text-muted-foreground line-clamp-3">{job.description}</p>
 
           {job.skills.length > 0 && (
             <div>
-              <h4 className="font-medium text-sm text-gray-900 mb-2">Required Skills:</h4>
+              <h4 className="font-medium text-sm text-foreground mb-2">Required Skills:</h4>
               <div className="flex flex-wrap gap-1">
                 {job.skills.map((skill, index) => (
                   <Badge key={index} variant="outline" className="text-xs">
@@ -197,7 +201,7 @@ function JobCard({ job, onApply }: { job: Job; onApply: (jobId: number) => void 
           <Separator />
 
           <div className="flex justify-between items-center">
-            <div className="text-sm text-gray-600">Posted by {job.posted_by_name}</div>
+            <div className="text-sm text-muted-foreground">Posted by {job.posted_by_name}</div>
             <Button onClick={() => onApply(job.id)}>Apply Now</Button>
           </div>
         </div>

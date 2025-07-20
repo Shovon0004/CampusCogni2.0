@@ -127,7 +127,11 @@ export default function DashboardPage() {
   })
 
   if (loading || loadingData) {
-    return <div className="min-h-screen flex items-center justify-center">Loading...</div>
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    )
   }
 
   if (!user) {
@@ -135,11 +139,11 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-8">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Recruiter Dashboard</h1>
-          <p className="text-gray-600">Manage your job postings and review applications</p>
+          <h1 className="text-3xl font-bold text-foreground mb-2">Recruiter Dashboard</h1>
+          <p className="text-muted-foreground">Manage your job postings and review applications</p>
         </div>
 
         <Tabs defaultValue="overview" className="space-y-6">
@@ -151,7 +155,7 @@ export default function DashboardPage() {
 
           <TabsContent value="overview">
             <div className="grid gap-6 md:grid-cols-3">
-              <Card>
+              <Card className="border-0 shadow-sm bg-background/80 backdrop-blur-sm">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium">Total Jobs Posted</CardTitle>
                   <Briefcase className="h-4 w-4 text-muted-foreground" />
@@ -161,7 +165,7 @@ export default function DashboardPage() {
                 </CardContent>
               </Card>
 
-              <Card>
+              <Card className="border-0 shadow-sm bg-background/80 backdrop-blur-sm">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium">Total Applications</CardTitle>
                   <Users className="h-4 w-4 text-muted-foreground" />
@@ -171,7 +175,7 @@ export default function DashboardPage() {
                 </CardContent>
               </Card>
 
-              <Card>
+              <Card className="border-0 shadow-sm bg-background/80 backdrop-blur-sm">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium">Pending Reviews</CardTitle>
                   <Eye className="h-4 w-4 text-muted-foreground" />
@@ -185,7 +189,7 @@ export default function DashboardPage() {
             </div>
 
             <div className="mt-6">
-              <Card>
+              <Card className="border-0 shadow-sm bg-background/80 backdrop-blur-sm">
                 <CardHeader>
                   <CardTitle>Recent Applications</CardTitle>
                 </CardHeader>
@@ -195,7 +199,7 @@ export default function DashboardPage() {
                       <div key={app.id} className="flex items-center justify-between p-4 border rounded-lg">
                         <div>
                           <h4 className="font-medium">{app.applicant_name}</h4>
-                          <p className="text-sm text-gray-600">
+                          <p className="text-sm text-muted-foreground">
                             Applied for {app.job_title} • {new Date(app.applied_at).toLocaleDateString()}
                           </p>
                         </div>
@@ -211,12 +215,12 @@ export default function DashboardPage() {
           <TabsContent value="jobs">
             <div className="space-y-6">
               {jobs.map((job) => (
-                <Card key={job.id}>
+                <Card key={job.id} className="border-0 shadow-sm bg-background/80 backdrop-blur-sm">
                   <CardHeader>
                     <div className="flex justify-between items-start">
                       <div>
                         <CardTitle>{job.title}</CardTitle>
-                        <CardDescription className="flex items-center gap-4 mt-2">
+                        <CardDescription className="flex items-center gap-4 mt-2 text-muted-foreground">
                           <span className="flex items-center gap-1">
                             <MapPin className="w-4 h-4" />
                             {job.location}
@@ -245,7 +249,7 @@ export default function DashboardPage() {
                     </div>
                   </CardHeader>
                   <CardContent>
-                    <p className="text-gray-700 mb-4">{job.description.substring(0, 200)}...</p>
+                    <p className="text-muted-foreground mb-4">{job.description.substring(0, 200)}...</p>
                     <div className="flex flex-wrap gap-1">
                       {job.skills.map((skill, index) => (
                         <Badge key={index} variant="outline" className="text-xs">
@@ -258,9 +262,9 @@ export default function DashboardPage() {
               ))}
 
               {jobs.length === 0 && (
-                <Card>
+                <Card className="border-0 shadow-sm bg-background/80 backdrop-blur-sm">
                   <CardContent className="p-8 text-center">
-                    <p className="text-gray-500 text-lg">No jobs posted yet.</p>
+                    <p className="text-muted-foreground text-lg">No jobs posted yet.</p>
                     <Button className="mt-4" onClick={() => router.push("/post-job")}>
                       Post Your First Job
                     </Button>
@@ -273,7 +277,7 @@ export default function DashboardPage() {
           <TabsContent value="applications">
             <div className="space-y-6">
               {/* Filters */}
-              <Card>
+              <Card className="border-0 shadow-sm bg-background/80 backdrop-blur-sm">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Filter className="w-5 h-5" />
@@ -334,17 +338,17 @@ export default function DashboardPage() {
               {/* Applications List */}
               <div className="space-y-4">
                 {filteredApplications.map((app) => (
-                  <Card key={app.id}>
+                  <Card key={app.id} className="border-0 shadow-sm bg-background/80 backdrop-blur-sm">
                     <CardHeader>
                       <div className="flex justify-between items-start">
                         <div className="flex items-center gap-4">
-                          <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
+                          <div className="w-12 h-12 bg-gradient-to-br from-primary to-purple-600 rounded-full flex items-center justify-center">
                             <User className="w-6 h-6 text-white" />
                           </div>
                           <div>
                             <CardTitle className="text-lg">{app.applicant_name}</CardTitle>
                             <CardDescription>{app.applicant_title}</CardDescription>
-                            <p className="text-sm text-gray-600 mt-1">Applied for: {app.job_title}</p>
+                            <p className="text-sm text-muted-foreground mt-1">Applied for: {app.job_title}</p>
                           </div>
                         </div>
                         <div className="flex items-center gap-2">
@@ -367,30 +371,30 @@ export default function DashboardPage() {
                     <CardContent>
                       <div className="space-y-4">
                         <div className="grid gap-4 md:grid-cols-2">
-                          <div className="flex items-center gap-2 text-sm text-gray-600">
+                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
                             <MapPin className="w-4 h-4" />
                             {app.applicant_location}
                           </div>
-                          <div className="flex items-center gap-2 text-sm text-gray-600">
+                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
                             <Calendar className="w-4 h-4" />
                             Applied {new Date(app.applied_at).toLocaleDateString()}
                           </div>
-                          <div className="flex items-center gap-2 text-sm text-gray-600">
+                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
                             <Mail className="w-4 h-4" />
                             {app.applicant_email}
                           </div>
                           {app.applicant_phone && (
-                            <div className="flex items-center gap-2 text-sm text-gray-600">
+                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
                               <Phone className="w-4 h-4" />
                               {app.applicant_phone}
                             </div>
                           )}
                         </div>
 
-                        <p className="text-sm text-gray-700">{app.applicant_summary}</p>
+                        <p className="text-sm text-muted-foreground">{app.applicant_summary}</p>
 
                         <div>
-                          <h4 className="font-medium text-sm text-gray-900 mb-2">Skills & Experience:</h4>
+                          <h4 className="font-medium text-sm text-foreground mb-2">Skills & Experience:</h4>
                           <div className="flex flex-wrap gap-2">
                             {app.applicant_skills.map((skill, index) => (
                               <Badge key={index} variant="outline" className="text-xs">
@@ -414,9 +418,9 @@ export default function DashboardPage() {
                 ))}
 
                 {filteredApplications.length === 0 && (
-                  <Card>
+                  <Card className="border-0 shadow-sm bg-background/80 backdrop-blur-sm">
                     <CardContent className="p-8 text-center">
-                      <p className="text-gray-500 text-lg">No applications found matching your filters.</p>
+                      <p className="text-muted-foreground text-lg">No applications found matching your filters.</p>
                     </CardContent>
                   </Card>
                 )}

@@ -92,7 +92,11 @@ export default function PostJobPage() {
   }
 
   if (loading) {
-    return <div className="min-h-screen flex items-center justify-center">Loading...</div>
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    )
   }
 
   if (!user) {
@@ -100,15 +104,15 @@ export default function PostJobPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-4xl mx-auto">
           <div className="mb-8">
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">Post a Job</h1>
-            <p className="text-gray-600">Find the perfect candidate for your open position</p>
+            <h1 className="text-3xl font-bold text-foreground mb-2">Post a Job</h1>
+            <p className="text-muted-foreground">Find the perfect candidate for your open position</p>
           </div>
 
-          <Card>
+          <Card className="border-0 shadow-lg bg-background/80 backdrop-blur-sm">
             <CardHeader>
               <CardTitle>Job Details</CardTitle>
               <CardDescription>Provide detailed information about the position</CardDescription>

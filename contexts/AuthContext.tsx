@@ -3,13 +3,14 @@
 import type React from "react"
 
 import { createContext, useContext, useEffect, useState } from "react"
-import { type User, signInWithPopup, signOut, onAuthStateChanged } from "firebase/auth"
-import { auth, googleProvider } from "@/lib/firebase"
+import { type User, signInWithPopup, signOut, onAuthStateChanged } from "firebase/auth" // Import GithubAuthProvider
+import { auth, googleProvider, githubProvider } from "@/lib/firebase" // Import githubProvider
 
 interface AuthContextType {
   user: User | null
   loading: boolean
   signInWithGoogle: () => Promise<void>
+  signInWithGitHub: () => Promise<void> // Add GitHub sign-in to type
   logout: () => Promise<void>
 }
 
@@ -28,6 +29,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       await signInWithPopup(auth, googleProvider)
     } catch (error) {
       console.error("Error signing in with Google:", error)
+    }
+  }
+
+  const signInWithGitHub = async () => {
+    // Implement GitHub sign-in
+    try {
+      await signInWithPopup(auth, githubProvider)
+    } catch (error) {
+      console.error("Error signing in with GitHub:", error)
+      // Handle specific GitHub errors, e.g., account-exists-with-different-credential
+      if ((error as any).code === "auth/account-exists-with-different-credential") {
+        alert(
+          "An account with this email already exists using a different sign-in method. Please sign in with your existing method.",
+        )
+      }
     }
   }
 
@@ -52,6 +68,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     user,
     loading,
     signInWithGoogle,
+    signInWithGitHub, // Provide GitHub sign-in function
     logout,
   }
 

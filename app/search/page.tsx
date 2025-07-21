@@ -5,7 +5,7 @@ import type React from "react"
 import { useAuth } from "@/contexts/AuthContext"
 import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
-import { Search, User, MapPin, Calendar, Star, Briefcase, CheckCircle, Sparkles } from "lucide-react"
+import { Search, User, MapPin, Calendar, Star, Briefcase, CheckCircle, Sparkles, LinkIcon } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -26,6 +26,7 @@ interface JobSeeker {
   summary: string
   match_type: "direct" | "indirect"
   match_score: number
+  leetcode_url?: string
   verified_skills?: Array<{
     skill: string
     isVerified: boolean
@@ -259,13 +260,23 @@ function CandidateCard({ candidate }: { candidate: JobSeeker }) {
               <Calendar className="w-3 h-3" />
               {candidate.experience_years}y exp
             </div>
+            {candidate.leetcode_url && (
+              <a
+                href={candidate.leetcode_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-1 text-blue-500 hover:underline"
+              >
+                <LinkIcon className="w-3 h-3" />
+                LeetCode
+              </a>
+            )}
           </div>
 
           <p className="text-xs sm:text-sm text-muted-foreground line-clamp-2 leading-relaxed">{candidate.summary}</p>
 
           <div className="flex flex-wrap gap-1">
             {candidate.skills.slice(0, 4).map((skill, index) => {
-              // Check if this skill is verified
               const verifiedSkill = candidate.verified_skills?.find(
                 (vs) => vs.skill.toLowerCase() === skill.toLowerCase(),
               )

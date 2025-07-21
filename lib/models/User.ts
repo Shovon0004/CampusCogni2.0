@@ -26,6 +26,7 @@ export interface JobSeeker {
   linkedinUrl?: string
   githubUrl?: string
   portfolioUrl?: string
+  leetcodeUrl?: string // New field for LeetCode profile URL
   availability: "available" | "not_available" | "open_to_offers"
   salaryExpectationMin?: number
   salaryExpectationMax?: number

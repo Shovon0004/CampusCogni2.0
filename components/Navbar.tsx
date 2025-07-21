@@ -108,9 +108,9 @@ export function Navbar() {
                 </DropdownMenu>
               </>
             ) : (
-              <Button onClick={signInWithGoogle} size="sm">
-                Sign In
-              </Button>
+              <Link href="/auth">
+                <Button size="sm">Sign In</Button>
+              </Link>
             )}
           </div>
 
@@ -161,9 +161,9 @@ export function Navbar() {
                 </SheetContent>
               </Sheet>
             ) : (
-              <Button onClick={signInWithGoogle} size="sm">
-                Sign In
-              </Button>
+              <Link href="/auth">
+                <Button size="sm">Sign In</Button>
+              </Link>
             )}
           </div>
         </div>

@@ -10,7 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge"
 import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
-import { X, Save, User, Award } from "lucide-react"
+import { X, Save, User, Award } from "lucide-react" // Import Link as LinkIcon to avoid conflict
 import { SkillVerificationModal } from "@/components/SkillVerificationModal"
 import { SkillInput } from "@/components/SkillInput"
 
@@ -32,6 +32,7 @@ export default function ProfilePage() {
     summary: "",
     skillsWithExperience: [] as SkillWithVerification[],
     phone: "",
+    leetcodeUrl: "", // Add LeetCode URL to state
   })
   const [saving, setSaving] = useState(false)
   const [loadingProfile, setLoadingProfile] = useState(true)
@@ -71,6 +72,7 @@ export default function ProfilePage() {
             experience_years: data.profile.experience_years || 0,
             summary: data.profile.summary || "",
             phone: data.profile.phone || "",
+            leetcodeUrl: data.profile.leetcode_url || "", // Set LeetCode URL from loaded data
             skillsWithExperience: data.profile.skills || [],
           })
           console.log("Profile state updated with skills:", data.profile.skills)
@@ -140,6 +142,7 @@ export default function ProfilePage() {
           email: user.email,
           name: user.displayName,
           skills: profile.skillsWithExperience,
+          leetcode_url: profile.leetcodeUrl, // Include LeetCode URL in save payload
         }),
       })
 
@@ -279,6 +282,17 @@ export default function ProfilePage() {
                         onChange={(e) => setProfile((prev) => ({ ...prev, phone: e.target.value }))}
                       />
                     </div>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="leetcodeUrl">LeetCode Profile URL</Label>
+                    <Input
+                      id="leetcodeUrl"
+                      type="url"
+                      placeholder="https://leetcode.com/your-profile"
+                      value={profile.leetcodeUrl}
+                      onChange={(e) => setProfile((prev) => ({ ...prev, leetcodeUrl: e.target.value }))}
+                    />
                   </div>
 
                   <div>

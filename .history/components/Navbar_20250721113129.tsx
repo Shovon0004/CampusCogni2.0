@@ -72,7 +72,7 @@ export function Navbar() {
                   <DropdownMenuTrigger asChild>
                     <Button variant="ghost" className="relative h-8 w-8 rounded-full">
                       <Avatar className="h-7 w-7">
-                        <AvatarImage src={user.photoURL || ""} alt={user.displayName || ""} crossOrigin="anonymous" />
+                        <AvatarImage src={user.photoURL || ""} alt={user.displayName || ""} />
                         <AvatarFallback className="text-xs">
                           {user.displayName?.charAt(0) || user.email?.charAt(0) || "U"}
                         </AvatarFallback>
@@ -128,7 +128,7 @@ export function Navbar() {
                   <div className="flex flex-col space-y-4 mt-8">
                     <div className="flex items-center space-x-3 pb-4 border-b">
                       <Avatar className="h-10 w-10">
-                        <AvatarImage src={user.photoURL || ""} alt={user.displayName || ""} crossOrigin="anonymous" />
+                        <AvatarImage src={user.photoURL || ""} alt={user.displayName || ""} />
                         <AvatarFallback>{user.displayName?.charAt(0) || user.email?.charAt(0) || "U"}</AvatarFallback>
                       </Avatar>
                       <div className="flex flex-col">

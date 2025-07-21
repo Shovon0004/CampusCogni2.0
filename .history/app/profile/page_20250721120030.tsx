@@ -40,7 +40,6 @@ export default function ProfilePage() {
     isOpen: false,
     skillName: "", // This should be the actual skill name
     userEmail: "", // This should be the user's email
-    userToken: null as string | null, // Added userToken
   })
 
   useEffect(() => {
@@ -112,16 +111,12 @@ export default function ProfilePage() {
     }))
   }
 
-  const handleVerifySkill = async (skillName: string) => {
-    if (user) {
-      const token = await user.getIdToken()
-      setVerificationModal({
-        isOpen: true,
-        skillName: skillName, // Pass the actual skill name
-        userEmail: user.email || "", // Pass the user's email
-        userToken: token, // Pass the user's ID token
-      })
-    }
+  const handleVerifySkill = (skillName: string) => {
+    setVerificationModal({
+      isOpen: true,
+      skillName: skillName, // Pass the actual skill name
+      userEmail: user?.email || "", // Pass the user's email
+    })
   }
 
   const handleVerificationComplete = () => {
@@ -224,7 +219,6 @@ export default function ProfilePage() {
                           src={user.photoURL || "/placeholder.svg"}
                           alt={user.displayName || ""}
                           className="w-16 h-16 rounded-full"
-                          crossOrigin="anonymous"
                         />
                       ) : (
                         <User className="w-8 h-8 text-white" />
@@ -390,10 +384,9 @@ export default function ProfilePage() {
       {/* Skill Verification Modal */}
       <SkillVerificationModal
         isOpen={verificationModal.isOpen}
-        onClose={() => setVerificationModal({ isOpen: false, skillName: "", userEmail: "", userToken: null })}
+        onClose={() => setVerificationModal({ isOpen: false, skillName: "", userEmail: "" })}
         skillName={verificationModal.skillName} // Pass the actual skill name
         userEmail={verificationModal.userEmail} // Pass the user's email
-        userToken={verificationModal.userToken} // Pass the user's ID token
         onVerificationComplete={handleVerificationComplete}
       />
     </div>

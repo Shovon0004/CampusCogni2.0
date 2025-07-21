@@ -43,7 +43,7 @@ interface SkillVerificationModalProps {
   onClose: () => void
   skillName: string
   userEmail: string
-  userToken: string | null
+  userToken: string | null // Added userToken prop
   onVerificationComplete: () => void
 }
 
@@ -52,7 +52,7 @@ export function SkillVerificationModal({
   onClose,
   skillName,
   userEmail,
-  userToken,
+  userToken, // Destructure userToken
   onVerificationComplete,
 }: SkillVerificationModalProps) {
   const [examData, setExamData] = useState<ExamData | null>(null)
@@ -69,35 +69,18 @@ export function SkillVerificationModal({
 
   const videoRef = useRef<HTMLVideoElement>(null)
   const timerRef = useRef<NodeJS.Timeout | null>(null)
-  const hasLoadedExamRef = useRef(false) // New ref to prevent multiple loads
 
-  // Function to stop camera stream
   const stopCamera = useCallback(() => {
-    console.log("stopCamera: Attempting to stop camera stream.")
     if (cameraStream) {
-      cameraStream.getTracks().forEach((track) => {
-        console.log(`stopCamera: Stopping track kind=${track.kind}, id=${track.id}`)
-        track.stop()
-      })
+      cameraStream.getTracks().forEach((track) => track.stop())
       setCameraStream(null)
-      if (videoRef.current) {
-        videoRef.current.srcObject = null // Clear srcObject
-        console.log("stopCamera: videoRef.current.srcObject set to null.")
-      }
-      console.log("stopCamera: Camera stream stopped and state cleared.")
-    } else {
-      console.log("stopCamera: No active camera stream to stop.")
     }
   }, [cameraStream])
 
-  // Comprehensive reset function for modal closure
   const handleClose = useCallback(() => {
-    console.log("handleClose: Initiating modal close and state reset.")
     stopCamera()
     if (timerRef.current) {
       clearInterval(timerRef.current)
-      timerRef.current = null
-      console.log("handleClose: Timer cleared.")
     }
     setExamData(null)
     setCurrentQuestion(0)
@@ -107,35 +90,16 @@ export function SkillVerificationModal({
     setExamCompleted(false)
     setExamResult(null)
     setCameraError(null)
-    setExamCanceled(false) // Ensure this is reset
-    hasLoadedExamRef.current = false // Reset ref when closing
-    console.log("handleClose: All states reset. Calling onClose prop.")
-    // Do NOT redirect to home page here; just close modal
+    setExamCanceled(false)
     onClose()
   }, [onClose, stopCamera])
 
-  // Function to submit exam (either normally or due to cancellation)
   const submitExam = useCallback(async () => {
-    if (!examData || examCompleted || (examCanceled && !examStarted)) {
-      console.log("submitExam: Conditions not met for submission. Skipping.", {
-        examData,
-        examCompleted,
-        examCanceled,
-        examStarted,
-      })
-      return
-    }
-
-    // Prevent multiple submissions
-    if (loading) {
-      console.log("submitExam: Already loading, preventing duplicate submission.")
-      return
-    }
+    if (!examData || examCompleted || examCanceled) return
 
     setLoading(true)
     stopCamera() // Stop camera when exam is submitted or canceled
 
-    console.log(`submitExam: Submitting exam to backend. Is canceled: ${examCanceled}`)
     try {
       const timeSpent = examData.timeLimit * 60 - timeLeft
       const response = await fetch("/api/skills/submit-exam", {
@@ -153,19 +117,15 @@ export function SkillVerificationModal({
         }),
       })
 
-      console.log("submitExam: API response received for submit-exam, status:", response.status)
-
       if (response.ok) {
         const result = await response.json()
-        console.log("submitExam: Exam submission successful:", result)
         setExamResult(result)
         setExamCompleted(true)
         if (result.passed) {
           onVerificationComplete()
         }
       } else {
-        const errorBody = await response.text() // Get raw text to debug
-        console.error("submitExam: Failed to submit exam:", response.status, errorBody)
+        console.error("Failed to submit exam:", response.status)
         setExamResult({
           success: false,
           score: 0,
@@ -178,7 +138,7 @@ export function SkillVerificationModal({
         setExamCompleted(true)
       }
     } catch (error) {
-      console.error("submitExam: Error submitting exam:", error)
+      console.error("Error submitting exam:", error)
       setExamResult({
         success: false,
         score: 0,
@@ -191,53 +151,33 @@ export function SkillVerificationModal({
       setExamCompleted(true)
     } finally {
       setLoading(false)
-      // Do not call handleClose here, let the state change (examCompleted/examCanceled) trigger the UI update
     }
-  }, [
-    examData,
-    examCompleted,
-    examCanceled,
-    timeLeft,
-    userEmail,
-    onVerificationComplete,
-    stopCamera,
-    userToken,
-    answers,
-    loading,
-    examStarted,
-  ])
+  }, [examData, examCompleted, examCanceled, timeLeft, userEmail, onVerificationComplete, stopCamera, userToken])
 
-  // Handle tab visibility changes for proctoring
   const handleVisibilityChange = useCallback(() => {
-    console.log("handleVisibilityChange: Visibility change detected. Current state:", document.visibilityState)
-    console.log(
-      "handleVisibilityChange: Exam states: examStarted=",
-      examStarted,
-      "examCompleted=",
-      examCompleted,
-      "examCanceled=",
-      examCanceled,
-    )
-
     if (document.visibilityState === "hidden" && examStarted && !examCompleted && !examCanceled) {
-      console.log("handleVisibilityChange: Tab switched to hidden AND exam is active. Setting examCanceled to true.")
-      setExamCanceled(true) // This will trigger the useEffect below to submit the exam
-    } else if (document.visibilityState === "visible") {
-      console.log("handleVisibilityChange: Tab switched to visible.")
+      setExamCanceled(true)
+      submitExam() // Submit with cancellation status
     }
-  }, [examStarted, examCompleted, examCanceled])
+  }, [examStarted, examCompleted, examCanceled, submitExam])
 
-  // Effect to manage event listeners and initial exam load
-  // Always set up visibilitychange listener when exam is started, and clean up when exam ends or modal closes
   useEffect(() => {
-    if (examStarted && !examCompleted && !examCanceled) {
+    if (isOpen) {
+      loadExam()
       document.addEventListener("visibilitychange", handleVisibilityChange)
-      // Disable context menu and selection for proctoring
+      // Disable context menu and selection
       document.addEventListener("contextmenu", preventDefaults)
       document.addEventListener("selectstart", preventDefaults)
       document.addEventListener("copy", preventDefaults)
       document.addEventListener("cut", preventDefaults)
       document.addEventListener("paste", preventDefaults)
+    } else {
+      document.removeEventListener("visibilitychange", handleVisibilityChange)
+      document.removeEventListener("contextmenu", preventDefaults)
+      document.removeEventListener("selectstart", preventDefaults)
+      document.removeEventListener("copy", preventDefaults)
+      document.removeEventListener("cut", preventDefaults)
+      document.removeEventListener("paste", preventDefaults)
     }
     return () => {
       document.removeEventListener("visibilitychange", handleVisibilityChange)
@@ -247,92 +187,42 @@ export function SkillVerificationModal({
       document.removeEventListener("cut", preventDefaults)
       document.removeEventListener("paste", preventDefaults)
     }
-  }, [examStarted, examCompleted, examCanceled, handleVisibilityChange])
-
-  // Load exam only when modal opens
-  useEffect(() => {
-    if (isOpen && !hasLoadedExamRef.current) {
-      loadExam()
-      hasLoadedExamRef.current = true
-    }
-    if (!isOpen) {
-      hasLoadedExamRef.current = false
-    }
-  }, [isOpen])
-
-  // Effect to trigger exam submission when examCanceled state changes
-  useEffect(() => {
-    if (examCanceled && examStarted && !examCompleted) {
-      console.log(
-        "useEffect[examCanceled]: examCanceled is true, examStarted is true, examCompleted is false. Submitting exam for cancellation.",
-      )
-      submitExam()
-    }
-  }, [examCanceled, examStarted, examCompleted, submitExam])
-
-  // Effect to manage camera stream assignment to video element
-  useEffect(() => {
-    if (videoRef.current && cameraStream) {
-      console.log("useEffect[cameraStream]: Assigning camera stream to video element.")
-      videoRef.current.srcObject = cameraStream
-    } else if (videoRef.current && !cameraStream) {
-      console.log("useEffect[cameraStream]: Clearing video element srcObject as cameraStream is null.")
-      videoRef.current.srcObject = null
-    }
-  }, [cameraStream])
+  }, [isOpen, handleVisibilityChange])
 
   const preventDefaults = (e: Event) => {
     e.preventDefault()
   }
 
-  // Request camera access
   const requestCameraAccess = async () => {
     setCameraError(null)
-    console.log("requestCameraAccess: Attempting to get user media (video).")
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ video: true })
       setCameraStream(stream)
-      console.log("requestCameraAccess: Camera access granted. Stream obtained.")
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream
+      }
       return true
     } catch (err) {
-      console.error("requestCameraAccess: Error accessing camera:", err)
-      let errorMessage = "Camera access denied or not available."
-      if (err instanceof DOMException) {
-        if (err.name === "NotAllowedError") {
-          errorMessage = "Camera access was denied by the user or browser settings. Please allow camera access."
-        } else if (err.name === "NotFoundError") {
-          errorMessage = "No camera found on this device."
-        } else if (err.name === "NotReadableError") {
-          errorMessage = "Camera is already in use by another application."
-        } else if (err.name === "AbortError") {
-          errorMessage = "Camera access was aborted."
-        } else if (err.name === "SecurityError") {
-          errorMessage = "Camera access is blocked by security policy (e.g., not HTTPS)."
-        }
-      }
-      setCameraError(`${errorMessage} Please allow camera access to start the exam.`)
-      console.log("requestCameraAccess: Camera access denied or failed.")
-      // If camera access is denied, the exam cannot start, so we should indicate cancellation
-      setExamCanceled(true) // Set canceled state if camera access fails
+      console.error("Error accessing camera:", err)
+      setCameraError("Camera access denied or not available. Please allow camera access to start the exam.")
       return false
     }
   }
 
-  // Load exam data from API
   const loadExam = async () => {
     setLoading(true)
-    console.log("loadExam: Attempting to load exam for skill:", skillName, "user:", userEmail)
+    console.log("Attempting to load exam for skill:", skillName, "user:", userEmail)
 
     if (!userToken) {
-      console.error("loadExam: User token is null, cannot load exam.")
+      console.error("User token is null, cannot load exam.")
       setCameraError("Authentication token missing. Please sign in again.")
-      setExamCanceled(true) // Set canceled state if no token
+      setExamCanceled(true)
       setLoading(false)
       return
     }
 
     try {
-      console.log("loadExam: Making API call to /api/skills/verify with token:", userToken ? "present" : "missing")
+      console.log("Making API call to /api/skills/verify with token:", userToken ? "present" : "missing")
       const response = await fetch("/api/skills/verify", {
         method: "POST",
         headers: {
@@ -342,52 +232,44 @@ export function SkillVerificationModal({
         body: JSON.stringify({ skillName, userEmail }),
       })
 
-      console.log("loadExam: API response received, status:", response.status)
+      console.log("API response received, status:", response.status)
 
       if (response.ok) {
         const data = await response.json()
-        console.log("loadExam: Exam data loaded successfully:", data)
+        console.log("Exam data loaded successfully:", data)
         setExamData(data.exam)
         setTimeLeft(data.exam.timeLimit * 60) // Convert minutes to seconds
         setAnswers(new Array(data.exam.questions.length).fill(-1))
       } else {
         const errorBody = await response.text() // Get raw text to debug
-        console.error("loadExam: Failed to load exam:", response.status, errorBody)
+        console.error("Failed to load exam:", response.status, errorBody)
         setCameraError(
           `Failed to load exam: ${response.status}. Please try again. (Details: ${errorBody.substring(0, 100)}...)`,
         ) // Show a more specific error
-        setExamCanceled(true) // Set canceled state on API error
+        setExamCanceled(true) // Still cancel, but with a better message
       }
     } catch (error) {
-      console.error("loadExam: Error loading exam:", error)
+      console.error("Error loading exam:", error)
       setCameraError(`Network error or invalid response: ${error instanceof Error ? error.message : String(error)}`) // Show network error
-      setExamCanceled(true) // Set canceled state on network error
+      setExamCanceled(true) // Still cancel
     } finally {
       setLoading(false)
     }
   }
 
-  // Start the exam and timer
   const startExam = async () => {
-    console.log("startExam: Attempting to start exam and request camera access.")
     const hasCameraAccess = await requestCameraAccess()
     if (hasCameraAccess) {
-      console.log("startExam: Camera access confirmed, setting examStarted to true and starting timer.")
       setExamStarted(true)
       timerRef.current = setInterval(() => {
         setTimeLeft((prev) => {
           if (prev <= 1) {
-            console.log("startExam: Timer ran out. Submitting exam.")
             submitExam()
             return 0
           }
           return prev - 1
         })
       }, 1000)
-    } else {
-      console.log("startExam: Camera access denied, exam not started.")
-      // If camera access is denied, requestCameraAccess already sets examCanceled(true)
-      // No need to set it again here.
     }
   }
 
@@ -418,22 +300,13 @@ export function SkillVerificationModal({
     return `${mins}:${secs.toString().padStart(2, "0")}`
   }
 
-  // Render logic based on exam state
   if (loading) {
     return (
-      <Dialog
-        open={isOpen}
-        onOpenChange={(open) => {
-          console.log(`Dialog onOpenChange triggered (loading state): ${open}`)
-          if (!open) handleClose()
-        }}
-      >
-        <DialogContent className="max-w-2xl bg-background/80 backdrop-blur-sm" aria-describedby="loading-description">
+      <Dialog open={isOpen} onOpenChange={handleClose}>
+        <DialogContent className="max-w-2xl bg-background/80 backdrop-blur-sm">
           <DialogHeader>
             <DialogTitle>Loading Exam</DialogTitle>
-            <DialogDescription id="loading-description">
-              Please wait while we prepare your skill verification test.
-            </DialogDescription>
+            <DialogDescription>Please wait while we prepare your skill verification test.</DialogDescription>
           </DialogHeader>
           <div className="flex items-center justify-center p-8">
             <div className="text-center">
@@ -448,20 +321,14 @@ export function SkillVerificationModal({
 
   if (examCanceled) {
     return (
-      <Dialog
-        open={isOpen}
-        onOpenChange={(open) => {
-          console.log(`Dialog onOpenChange triggered (canceled state): ${open}`)
-          if (!open) handleClose()
-        }}
-      >
-        <DialogContent className="max-w-2xl bg-background/80 backdrop-blur-sm" aria-describedby="cancel-description">
+      <Dialog open={isOpen} onOpenChange={handleClose}>
+        <DialogContent className="max-w-2xl bg-background/80 backdrop-blur-sm">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-red-600">
               <AlertTriangle className="w-6 h-6" />
               Exam Canceled
             </DialogTitle>
-            <DialogDescription id="cancel-description">
+            <DialogDescription>
               {cameraError || "Your exam was canceled because you switched tabs or lost camera access."}
             </DialogDescription>
           </DialogHeader>
@@ -480,14 +347,8 @@ export function SkillVerificationModal({
 
   if (examCompleted && examResult) {
     return (
-      <Dialog
-        open={isOpen}
-        onOpenChange={(open) => {
-          console.log(`Dialog onOpenChange triggered (completed state): ${open}`)
-          if (!open) handleClose()
-        }}
-      >
-        <DialogContent className="max-w-2xl bg-background/80 backdrop-blur-sm" aria-describedby="results-description">
+      <Dialog open={isOpen} onOpenChange={handleClose}>
+        <DialogContent className="max-w-2xl bg-background/80 backdrop-blur-sm">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               {examResult.passed ? (
@@ -497,7 +358,7 @@ export function SkillVerificationModal({
               )}
               Exam Results
             </DialogTitle>
-            <DialogDescription id="results-description">
+            <DialogDescription>
               {examResult.passed
                 ? "Congratulations! You passed the exam."
                 : "You didn't pass this time. Keep practicing!"}
@@ -559,25 +420,14 @@ export function SkillVerificationModal({
 
   if (!examStarted && examData) {
     return (
-      <Dialog
-        open={isOpen}
-        onOpenChange={(open) => {
-          console.log(`Dialog onOpenChange triggered (initial state): ${open}`)
-          if (!open) handleClose()
-        }}
-      >
-        <DialogContent
-          className="max-w-2xl bg-background/80 backdrop-blur-sm"
-          aria-describedby="instructions-description"
-        >
+      <Dialog open={isOpen} onOpenChange={handleClose}>
+        <DialogContent className="max-w-2xl bg-background/80 backdrop-blur-sm">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Award className="w-6 h-6 text-primary" />
               {examData.skillName} Skill Verification
             </DialogTitle>
-            <DialogDescription id="instructions-description">
-              Test your knowledge and verify your {examData.skillName} skills
-            </DialogDescription>
+            <DialogDescription>Test your knowledge and verify your {examData.skillName} skills</DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4">
@@ -636,20 +486,9 @@ export function SkillVerificationModal({
     const progress = ((currentQuestion + 1) / examData.questions.length) * 100
 
     return (
-      <Dialog
-        open={isOpen}
-        onOpenChange={(open) => {
-          console.log(`Dialog onOpenChange triggered (exam active state): ${open}`)
-          // IMPORTANT: We intentionally do NOT call handleClose here if !open,
-          // because we don't want the user to close the dialog during an active exam
-          // by clicking outside or pressing escape. Cancellation is handled by proctoring.
-        }}
-      >
-        {" "}
-        {/* onOpenChange is intentionally empty to prevent closing during exam */}
+      <Dialog open={isOpen} onOpenChange={() => {}}>
         <DialogContent
           className="max-w-2xl bg-background/80 backdrop-blur-sm"
-          aria-describedby="exam-description"
           // Disable text selection and copying for proctoring
           onCopy={preventDefaults}
           onCut={preventDefaults}
@@ -673,9 +512,10 @@ export function SkillVerificationModal({
           <div className="space-y-4">
             {/* Camera Feed */}
             <div className="relative w-full h-32 bg-muted rounded-md overflow-hidden">
-              <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover" />
-              {!cameraStream && ( // Overlay if no stream
-                <div className="absolute inset-0 flex flex-col items-center justify-center text-muted-foreground bg-muted/80">
+              {cameraStream ? (
+                <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover" />
+              ) : (
+                <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
                   <CameraOff className="w-8 h-8 mb-2" />
                   <span>Camera not active</span>
                 </div>
@@ -683,14 +523,6 @@ export function SkillVerificationModal({
               <Badge variant="secondary" className="absolute top-2 left-2 flex items-center gap-1">
                 <Video className="w-3 h-3" />
                 Live Proctoring
-              </Badge>
-              {/* Visual confirmation that exam has started */}
-              <Badge
-                variant="default"
-                className="absolute top-2 right-2 flex items-center gap-1 bg-green-500 text-white"
-              >
-                <CheckCircle className="w-3 h-3" />
-                Exam Active
               </Badge>
             </div>
 

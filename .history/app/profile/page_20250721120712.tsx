@@ -224,7 +224,6 @@ export default function ProfilePage() {
                           src={user.photoURL || "/placeholder.svg"}
                           alt={user.displayName || ""}
                           className="w-16 h-16 rounded-full"
-                          crossOrigin="anonymous"
                         />
                       ) : (
                         <User className="w-8 h-8 text-white" />

@@ -110,7 +110,6 @@ export function SkillVerificationModal({
     setExamCanceled(false) // Ensure this is reset
     hasLoadedExamRef.current = false // Reset ref when closing
     console.log("handleClose: All states reset. Calling onClose prop.")
-    // Do NOT redirect to home page here; just close modal
     onClose()
   }, [onClose, stopCamera])
 
@@ -228,9 +227,11 @@ export function SkillVerificationModal({
   }, [examStarted, examCompleted, examCanceled])
 
   // Effect to manage event listeners and initial exam load
-  // Always set up visibilitychange listener when exam is started, and clean up when exam ends or modal closes
   useEffect(() => {
-    if (examStarted && !examCompleted && !examCanceled) {
+    if (isOpen && !hasLoadedExamRef.current) {
+      console.log("useEffect[isOpen]: Modal opened and exam not yet loaded. Calling loadExam().")
+      loadExam()
+      hasLoadedExamRef.current = true // Mark as loaded
       document.addEventListener("visibilitychange", handleVisibilityChange)
       // Disable context menu and selection for proctoring
       document.addEventListener("contextmenu", preventDefaults)
@@ -238,8 +239,20 @@ export function SkillVerificationModal({
       document.addEventListener("copy", preventDefaults)
       document.addEventListener("cut", preventDefaults)
       document.addEventListener("paste", preventDefaults)
+    } else if (!isOpen) {
+      console.log("useEffect[isOpen]: Modal closed. Cleaning up event listeners.")
+      // Clean up listeners when modal closes
+      document.removeEventListener("visibilitychange", handleVisibilityChange)
+      document.removeEventListener("contextmenu", preventDefaults)
+      document.removeEventListener("selectstart", preventDefaults)
+      document.removeEventListener("copy", preventDefaults)
+      document.removeEventListener("cut", preventDefaults)
+      document.removeEventListener("paste", preventDefaults)
+      // No need to call handleClose here, as onOpenChange handles it
     }
+    // Cleanup function for this effect
     return () => {
+      console.log("useEffect[isOpen] cleanup: Removing event listeners.")
       document.removeEventListener("visibilitychange", handleVisibilityChange)
       document.removeEventListener("contextmenu", preventDefaults)
       document.removeEventListener("selectstart", preventDefaults)
@@ -247,18 +260,7 @@ export function SkillVerificationModal({
       document.removeEventListener("cut", preventDefaults)
       document.removeEventListener("paste", preventDefaults)
     }
-  }, [examStarted, examCompleted, examCanceled, handleVisibilityChange])
-
-  // Load exam only when modal opens
-  useEffect(() => {
-    if (isOpen && !hasLoadedExamRef.current) {
-      loadExam()
-      hasLoadedExamRef.current = true
-    }
-    if (!isOpen) {
-      hasLoadedExamRef.current = false
-    }
-  }, [isOpen])
+  }, [isOpen, handleVisibilityChange])
 
   // Effect to trigger exam submission when examCanceled state changes
   useEffect(() => {

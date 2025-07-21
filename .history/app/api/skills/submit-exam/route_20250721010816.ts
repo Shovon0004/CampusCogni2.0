@@ -5,7 +5,7 @@ import type { SkillExam, SkillVerificationAttempt, JobSeeker, User } from "@/lib
 
 export async function POST(request: NextRequest) {
   try {
-    const { examId, answers, userEmail, timeSpent, isCanceled } = await request.json() // Get isCanceled
+    const { examId, answers, userEmail, timeSpent } = await request.json()
     const authHeader = request.headers.get("authorization")
 
     if (!authHeader) {
@@ -30,44 +30,24 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Exam not found" }, { status: 404 })
     }
 
-    let score = 0
-    let passed = false
+    // Calculate score
     let correctAnswers = 0
-    const results: Array<any> = []
+    const results = exam.questions.map((question, index) => {
+      const userAnswer = answers[index]
+      const isCorrect = userAnswer === question.correctAnswer
+      if (isCorrect) correctAnswers++
 
-    if (!isCanceled) {
-      // Only calculate score if exam was not canceled
-      // Calculate score
-      exam.questions.map((question, index) => {
-        const userAnswer = answers[index]
-        const isCorrect = userAnswer === question.correctAnswer
-        if (isCorrect) correctAnswers++
+      return {
+        question: question.question,
+        userAnswer: question.options[userAnswer] || "No answer",
+        correctAnswer: question.options[question.correctAnswer],
+        isCorrect,
+        explanation: question.explanation,
+      }
+    })
 
-        results.push({
-          question: question.question,
-          userAnswer: question.options[userAnswer] || "No answer",
-          correctAnswer: question.options[question.correctAnswer],
-          isCorrect,
-          explanation: question.explanation,
-        })
-      })
-
-      score = Math.round((correctAnswers / exam.questions.length) * 100)
-      passed = score >= exam.passingScore
-    } else {
-      // If canceled, set score to 0 and not passed
-      score = 0
-      passed = false
-      correctAnswers = 0
-      // Optionally, you could log a specific reason for cancellation in results
-      results.push({
-        question: "Exam Canceled",
-        userAnswer: "N/A",
-        correctAnswer: "N/A",
-        isCorrect: false,
-        explanation: "Exam was canceled due to proctoring violation (e.g., tab switch or camera loss).",
-      })
-    }
+    const score = Math.round((correctAnswers / exam.questions.length) * 100)
+    const passed = score >= exam.passingScore
 
     // Save verification attempt
     const attemptDoc: Omit<SkillVerificationAttempt, "_id"> = {
@@ -80,7 +60,6 @@ export async function POST(request: NextRequest) {
       passed,
       timeSpent: timeSpent || 0,
       attemptedAt: new Date(),
-      // You might want to add a field like `cancellationReason` here
     }
 
     await db.collection<SkillVerificationAttempt>("skill_verification_attempts").insertOne(attemptDoc)
@@ -110,7 +89,6 @@ export async function POST(request: NextRequest) {
       correctAnswers,
       totalQuestions: exam.questions.length,
       results,
-      isCanceled: isCanceled, // Return cancellation status
     })
   } catch (error) {
     console.error("Error submitting exam:", error)

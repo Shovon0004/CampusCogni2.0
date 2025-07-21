@@ -110,7 +110,6 @@ export function SkillVerificationModal({
     setExamCanceled(false) // Ensure this is reset
     hasLoadedExamRef.current = false // Reset ref when closing
     console.log("handleClose: All states reset. Calling onClose prop.")
-    // Do NOT redirect to home page here; just close modal
     onClose()
   }, [onClose, stopCamera])
 
@@ -153,7 +152,7 @@ export function SkillVerificationModal({
         }),
       })
 
-      console.log("submitExam: API response received for submit-exam, status:", response.status)
+      console.log("submitExam: API response received, status:", response.status)
 
       if (response.ok) {
         const result = await response.json()
@@ -228,9 +227,11 @@ export function SkillVerificationModal({
   }, [examStarted, examCompleted, examCanceled])
 
   // Effect to manage event listeners and initial exam load
-  // Always set up visibilitychange listener when exam is started, and clean up when exam ends or modal closes
   useEffect(() => {
-    if (examStarted && !examCompleted && !examCanceled) {
+    if (isOpen && !hasLoadedExamRef.current) {
+      console.log("useEffect[isOpen]: Modal opened and exam not yet loaded. Calling loadExam().")
+      loadExam()
+      hasLoadedExamRef.current = true // Mark as loaded
       document.addEventListener("visibilitychange", handleVisibilityChange)
       // Disable context menu and selection for proctoring
       document.addEventListener("contextmenu", preventDefaults)
@@ -238,8 +239,20 @@ export function SkillVerificationModal({
       document.addEventListener("copy", preventDefaults)
       document.addEventListener("cut", preventDefaults)
       document.addEventListener("paste", preventDefaults)
+    } else if (!isOpen) {
+      console.log("useEffect[isOpen]: Modal closed. Cleaning up event listeners.")
+      // Clean up listeners when modal closes
+      document.removeEventListener("visibilitychange", handleVisibilityChange)
+      document.removeEventListener("contextmenu", preventDefaults)
+      document.removeEventListener("selectstart", preventDefaults)
+      document.removeEventListener("copy", preventDefaults)
+      document.removeEventListener("cut", preventDefaults)
+      document.removeEventListener("paste", preventDefaults)
+      // No need to call handleClose here, as onOpenChange handles it
     }
+    // Cleanup function for this effect
     return () => {
+      console.log("useEffect[isOpen] cleanup: Removing event listeners.")
       document.removeEventListener("visibilitychange", handleVisibilityChange)
       document.removeEventListener("contextmenu", preventDefaults)
       document.removeEventListener("selectstart", preventDefaults)
@@ -247,18 +260,7 @@ export function SkillVerificationModal({
       document.removeEventListener("cut", preventDefaults)
       document.removeEventListener("paste", preventDefaults)
     }
-  }, [examStarted, examCompleted, examCanceled, handleVisibilityChange])
-
-  // Load exam only when modal opens
-  useEffect(() => {
-    if (isOpen && !hasLoadedExamRef.current) {
-      loadExam()
-      hasLoadedExamRef.current = true
-    }
-    if (!isOpen) {
-      hasLoadedExamRef.current = false
-    }
-  }, [isOpen])
+  }, [isOpen, handleVisibilityChange])
 
   // Effect to trigger exam submission when examCanceled state changes
   useEffect(() => {
@@ -312,8 +314,6 @@ export function SkillVerificationModal({
       }
       setCameraError(`${errorMessage} Please allow camera access to start the exam.`)
       console.log("requestCameraAccess: Camera access denied or failed.")
-      // If camera access is denied, the exam cannot start, so we should indicate cancellation
-      setExamCanceled(true) // Set canceled state if camera access fails
       return false
     }
   }
@@ -386,8 +386,9 @@ export function SkillVerificationModal({
       }, 1000)
     } else {
       console.log("startExam: Camera access denied, exam not started.")
-      // If camera access is denied, requestCameraAccess already sets examCanceled(true)
-      // No need to set it again here.
+      // If camera access is denied, the exam cannot start, so we should indicate cancellation
+      setExamCanceled(true)
+      setCameraError(cameraError || "Camera access is required to start the exam and was denied.")
     }
   }
 
@@ -421,19 +422,11 @@ export function SkillVerificationModal({
   // Render logic based on exam state
   if (loading) {
     return (
-      <Dialog
-        open={isOpen}
-        onOpenChange={(open) => {
-          console.log(`Dialog onOpenChange triggered (loading state): ${open}`)
-          if (!open) handleClose()
-        }}
-      >
-        <DialogContent className="max-w-2xl bg-background/80 backdrop-blur-sm" aria-describedby="loading-description">
+      <Dialog open={isOpen} onOpenChange={handleClose}>
+        <DialogContent className="max-w-2xl bg-background/80 backdrop-blur-sm">
           <DialogHeader>
             <DialogTitle>Loading Exam</DialogTitle>
-            <DialogDescription id="loading-description">
-              Please wait while we prepare your skill verification test.
-            </DialogDescription>
+            <DialogDescription>Please wait while we prepare your skill verification test.</DialogDescription>
           </DialogHeader>
           <div className="flex items-center justify-center p-8">
             <div className="text-center">
@@ -448,20 +441,14 @@ export function SkillVerificationModal({
 
   if (examCanceled) {
     return (
-      <Dialog
-        open={isOpen}
-        onOpenChange={(open) => {
-          console.log(`Dialog onOpenChange triggered (canceled state): ${open}`)
-          if (!open) handleClose()
-        }}
-      >
-        <DialogContent className="max-w-2xl bg-background/80 backdrop-blur-sm" aria-describedby="cancel-description">
+      <Dialog open={isOpen} onOpenChange={handleClose}>
+        <DialogContent className="max-w-2xl bg-background/80 backdrop-blur-sm">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-red-600">
               <AlertTriangle className="w-6 h-6" />
               Exam Canceled
             </DialogTitle>
-            <DialogDescription id="cancel-description">
+            <DialogDescription>
               {cameraError || "Your exam was canceled because you switched tabs or lost camera access."}
             </DialogDescription>
           </DialogHeader>
@@ -480,14 +467,8 @@ export function SkillVerificationModal({
 
   if (examCompleted && examResult) {
     return (
-      <Dialog
-        open={isOpen}
-        onOpenChange={(open) => {
-          console.log(`Dialog onOpenChange triggered (completed state): ${open}`)
-          if (!open) handleClose()
-        }}
-      >
-        <DialogContent className="max-w-2xl bg-background/80 backdrop-blur-sm" aria-describedby="results-description">
+      <Dialog open={isOpen} onOpenChange={handleClose}>
+        <DialogContent className="max-w-2xl bg-background/80 backdrop-blur-sm">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               {examResult.passed ? (
@@ -497,7 +478,7 @@ export function SkillVerificationModal({
               )}
               Exam Results
             </DialogTitle>
-            <DialogDescription id="results-description">
+            <DialogDescription>
               {examResult.passed
                 ? "Congratulations! You passed the exam."
                 : "You didn't pass this time. Keep practicing!"}
@@ -559,25 +540,14 @@ export function SkillVerificationModal({
 
   if (!examStarted && examData) {
     return (
-      <Dialog
-        open={isOpen}
-        onOpenChange={(open) => {
-          console.log(`Dialog onOpenChange triggered (initial state): ${open}`)
-          if (!open) handleClose()
-        }}
-      >
-        <DialogContent
-          className="max-w-2xl bg-background/80 backdrop-blur-sm"
-          aria-describedby="instructions-description"
-        >
+      <Dialog open={isOpen} onOpenChange={handleClose}>
+        <DialogContent className="max-w-2xl bg-background/80 backdrop-blur-sm">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Award className="w-6 h-6 text-primary" />
               {examData.skillName} Skill Verification
             </DialogTitle>
-            <DialogDescription id="instructions-description">
-              Test your knowledge and verify your {examData.skillName} skills
-            </DialogDescription>
+            <DialogDescription>Test your knowledge and verify your {examData.skillName} skills</DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4">
@@ -636,20 +606,11 @@ export function SkillVerificationModal({
     const progress = ((currentQuestion + 1) / examData.questions.length) * 100
 
     return (
-      <Dialog
-        open={isOpen}
-        onOpenChange={(open) => {
-          console.log(`Dialog onOpenChange triggered (exam active state): ${open}`)
-          // IMPORTANT: We intentionally do NOT call handleClose here if !open,
-          // because we don't want the user to close the dialog during an active exam
-          // by clicking outside or pressing escape. Cancellation is handled by proctoring.
-        }}
-      >
+      <Dialog open={isOpen} onOpenChange={() => {}}>
         {" "}
         {/* onOpenChange is intentionally empty to prevent closing during exam */}
         <DialogContent
           className="max-w-2xl bg-background/80 backdrop-blur-sm"
-          aria-describedby="exam-description"
           // Disable text selection and copying for proctoring
           onCopy={preventDefaults}
           onCut={preventDefaults}
